@@ -271,6 +271,7 @@ k e y: ${eventKey}
 
   clear () {
     if (this.isDOM) {
+      this.skillDOM.innerHTML = ``;
       this.listDOM.innerHTML = `
       <p class="event-name">null</p>
       <ul class="event-list">
