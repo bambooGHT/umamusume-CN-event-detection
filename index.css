@@ -63,11 +63,20 @@
    border-top: 0;
    color: #7b431b;
    padding: 0 0.1rem;
+   display: flex;
+ }
+
+ .event-list,
+ .event-list li {
+   flex-direction: column;
+   justify-content: center;
  }
 
  .event-list li {
    position: relative;
    padding: 2px 0;
+   flex-grow: 1;
+   display: flex;
  }
 
  .event-list li:nth-last-child(n+2) {
@@ -104,7 +113,6 @@
    border: 2px solid #59b300;
    min-height: 239.5px;
    color: black;
-   display: flex;
    flex-wrap: wrap;
  }
 
@@ -112,13 +120,13 @@
    box-sizing: border-box;
    width: 50%;
    text-align: left;
-   padding: 0 2.5px;
+   padding: 0 2.5px 2.5px;
    margin: 0.15rem 0;
    border-bottom: 2px solid #59b300;
  }
 
- .skill-list li:nth-child(odd) {
-   border-right: 2px solid #59b300;
+ .skill-list li:nth-child(even) {
+   border-left: 2px solid #59b300;
  }
 
  .skill-list li div {
