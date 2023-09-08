@@ -48,6 +48,7 @@ const createCharacterList = (data, render) => {
     const p = document.createElement("p");
     const label = document.createElement("label");
 
+    img.setAttribute("referrerpolicy", "no-referrer");
     img.src = icon;
     img.onclick = () => toggle(name, event);
     p.innerText = name;
@@ -146,7 +147,7 @@ class Switch {
     if (this.timer === null) return;
     this.timer = setTimeout(() => {
       this.render.render().then(() => this.monitorOpen());
-    }, 550);
+    }, 500);
   }
   monitorClose () {
     clearTimeout(this.timer);
@@ -204,10 +205,6 @@ class Render {
 
     const event = this.getEvent(text, eventKey);
     const { listDOM, skillDOM, currentEvent } = this;
-    console.log(`
-value: ${text},
-k e y: ${eventKey}
-    `);
     if (!event || event.name === currentEvent?.name) return;
     const eventDOMString = this.createEventElement(event);
     listDOM.innerHTML = eventDOMString;
@@ -234,13 +231,15 @@ k e y: ${eventKey}
       return nameLen >= min && nameLen <= max;
     });
 
+    const value = { len: 0, data: null };
     const result = eventList.find((item) => {
       if (text === item.name) return item;
       const count = countCommonCharacters(text, item.name);
-      if (count === text.length || count >= 3) return item;
+      if (count === text.length) return item;
+      if (count >= 3 && count > value.len) value.data = item;
     });
 
-    return result;
+    return result || value.data;
   }
   /** @returns {Promise<string>} */
   async recognizeText () {
@@ -258,10 +257,13 @@ k e y: ${eventKey}
     const eventIndex = this.eventId.find(p => countCommonCharacters(p.id, eventId) > 0);
 
     if (!text || !eventIndex || !text.replace(/[^\u4e00-\u9fa5a-zA-Z\n]/g, "")) {
-      this.clear();
+      if (this.isDOM) {
+        this.clear();
+        this.isDOM = false;
+      }
       return [];
     }
-    if (this.text === text || (countCommonCharacters(this.text, text) > 2)) {
+    if (this.text === text || countCommonCharacters(this.text, text) > 2) {
       return [];
     };
 
@@ -270,15 +272,12 @@ k e y: ${eventKey}
   }
 
   clear () {
-    if (this.isDOM) {
-      this.skillDOM.innerHTML = ``;
-      this.listDOM.innerHTML = `
+    this.skillDOM.innerHTML = ``;
+    this.listDOM.innerHTML = `
       <p class="event-name">null</p>
       <ul class="event-list">
         <li class="null"></li>
       </ul>`;
-    }
-    this.isDOM = false;
   }
   /** @param {EventData} event  */
   createEventElement (event) {
@@ -302,7 +301,7 @@ k e y: ${eventKey}
       DOMString += `
         <li>
         <div>
-          <img src="${item.iconUrl}">
+          <img referrerpolicy="no-referrer" src="${item.iconUrl}">
           <span>${item.name}</span>
         </div>
         <p>
