@@ -5,12 +5,8 @@
  }
 
  .box {
-   max-width: 780px;
+   max-width: 790px;
    margin: 0 auto;
- }
-
- .skill {
-   width: 100%;
  }
 
  .box>* {
@@ -104,10 +100,9 @@
  }
 
  .skill-list {
-   margin-top: 0.3rem;
-   padding: 0.2rem;
+   padding: 0.2rem 0;
    border: 2px solid #59b300;
-   min-height: 213.5px;
+   min-height: 239.5px;
    color: black;
    display: flex;
    flex-wrap: wrap;
@@ -117,7 +112,9 @@
    box-sizing: border-box;
    width: 50%;
    text-align: left;
-   margin-top: 0.15rem;
+   padding: 0 2.5px;
+   margin: 0.15rem 0;
+   border-bottom: 2px solid #59b300;
  }
 
  .skill-list li:nth-child(odd) {
@@ -140,7 +137,7 @@
 
  .skill-list li p {
    display: flex;
-   margin-top: 3px;
+   margin-top: 3.5px;
  }
 
  .skill-list li p span {
@@ -150,6 +147,10 @@
 
  .skill-list li p span:nth-child(1) {
    width: 5rem;
+ }
+
+ .skill-list li p span:nth-child(2) {
+   flex: 1;
  }
 
  .character ul {
