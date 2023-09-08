@@ -234,8 +234,8 @@ class Render {
     const value = { len: 0, data: null };
     const result = eventList.find((item) => {
       if (text === item.name) return item;
-      const count = countCommonCharacters(text, item.name);
-      if (count === text.length) return item;
+      const count = countCommonCharacters(item.name, text);
+      if (count === item.nameLength) return item;
       if (count >= 3 && count > value.len) value.data = item;
     });
 
