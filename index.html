@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>事件选项</title>
+  <script src='https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js'></script>
+  <script src="./utils.js"></script>
+  <script src=" ./index.js"></script>
+  <link rel="stylesheet" href="./index.css">
+</head>
+
+<body>
+  <div class="box">
+    <p id="get" onclick="init()">准备中</p>
+    <div class="switch">
+      <div class="character">
+        <input type="checkbox" id="select-character">
+        <label for="select-character" id="current-character">请选择你的优俊少女</label>
+        <ul class="character-list">
+          <li style="padding: 1rem 0;">准备中</li>
+        </ul>
+      </div>
+      <p onclick="toSwitch.to(event)">开始监听</p>
+    </div>
+    <div id="event">
+      <p class="event-name">null</p>
+      <ul class="event-list">
+        <li class="null">
+          null
+        </li>
+      </ul>
+    </div>
+    <p>事件可获取的技能信息</p>
+    <ul class="skill-list">
+    </ul>
+  </div>
+</body>
+
+</html>

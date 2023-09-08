@@ -1,0 +1,198 @@
+ * {
+   margin: 0;
+   padding: 0;
+   list-style: none;
+ }
+
+ .box {
+   max-width: 780px;
+   margin: 0 auto;
+ }
+
+ .skill {
+   width: 100%;
+ }
+
+ .box>* {
+   margin: 0 auto;
+   text-align: center;
+ }
+
+
+ #get {
+   width: max-content;
+   border-bottom: 4px #63c404 solid;
+   padding: 0 0.5rem;
+   font-size: 1.2rem;
+   margin-bottom: 5px;
+ }
+
+ #get,
+ .switch {
+   user-select: none;
+   cursor: pointer;
+ }
+
+ .switch {
+   display: flex;
+   justify-content: center;
+   position: relative;
+ }
+
+ .switch>* {
+   margin: 0 0.5rem;
+ }
+
+ #event {
+   margin-top: 5px;
+   font-family: "Roboto", Arial, "Clear Sans", Verdana, "Century Gothic", Helvetica, "PingFang", "PingFang TC", "LiHei Pro Medium", "Heiti TC", "Microsoft JhengHei", "DFKai-SB", sans-serif;
+ }
+
+ .event-name {
+   font-size: 1.05rem;
+   height: 1.9rem;
+   line-height: 2rem;
+   background: #63c404 url(https://prettyderby.wiki/WebSites/PrettyDerby/images/bg_title_deco-2dccf20.png);
+   background-repeat: no-repeat;
+   background-position: center;
+   background-size: cover;
+   color: #ffffff;
+   font-weight: bold;
+ }
+
+ .event-list,
+ .skill-list {
+   min-height: 10rem;
+   border: 2px solid #59b300;
+   border-top: 0;
+   color: #7b431b;
+   padding: 0 0.1rem;
+ }
+
+ .event-list li {
+   position: relative;
+   padding: 2px 0;
+ }
+
+ .event-list li:nth-last-child(n+2) {
+   border-bottom: 2px solid #59b300;
+ }
+
+ .event-list li p {
+   margin: auto;
+   width: max-content;
+   position: relative;
+   white-space: pre-line;
+   min-height: 35px;
+   display: flex;
+   flex-direction: column;
+   justify-content: center;
+ }
+
+ .event-list li p:nth-child(1) {
+   position: absolute;
+   border-right: 2px solid #69c10c;
+   color: #69c10c;
+   height: calc(100% - 2px);
+   padding: 0 0.3rem;
+   font-weight: bold;
+ }
+
+ .null {
+   min-height: 10rem;
+   line-height: 10rem;
+ }
+
+ .skill-list {
+   margin-top: 0.3rem;
+   padding: 0.2rem;
+   border: 2px solid #59b300;
+   min-height: 213.5px;
+   color: black;
+   display: flex;
+   flex-wrap: wrap;
+ }
+
+ .skill-list li {
+   box-sizing: border-box;
+   width: 50%;
+   text-align: left;
+   margin-top: 0.15rem;
+ }
+
+ .skill-list li:nth-child(odd) {
+   border-right: 2px solid #59b300;
+ }
+
+ .skill-list li div {
+   display: flex;
+ }
+
+ .skill-list li div img {
+   height: 3rem;
+ }
+
+ .skill-list li div span {
+   margin-left: 0.3rem;
+   height: 3rem;
+   line-height: 3rem;
+ }
+
+ .skill-list li p {
+   display: flex;
+   margin-top: 3px;
+ }
+
+ .skill-list li p span {
+   display: block;
+   white-space: pre-line;
+ }
+
+ .skill-list li p span:nth-child(1) {
+   width: 5rem;
+ }
+
+ .character ul {
+   position: absolute;
+   margin: auto;
+   width: 99%;
+   display: none;
+   justify-content: space-evenly;
+   flex-wrap: wrap;
+   top: 1.8rem;
+   left: 0.5%;
+   background-color: white;
+   box-shadow: 0 0 6px black;
+   z-index: 1000;
+   font-size: 12px;
+   cursor: default;
+ }
+
+ .character>ul>li {
+   text-align: center;
+   width: calc(20% - 6px);
+ }
+
+ #current-character,
+ .character>ul>li img {
+   cursor: pointer;
+
+ }
+
+ .character>ul>li img {
+   width: 3.7rem;
+   image-rendering: -moz-crisp-edges;
+   image-rendering: -o-crisp-edges;
+   image-rendering: -webkit-optimize-contrast;
+   image-rendering: crisp-edges;
+   -ms-interpolation-mode: nearest-neighbor;
+   -webkit-font-smooting: antialiased;
+ }
+
+ #select-character {
+   display: none;
+ }
+
+ #select-character:checked~ul {
+   display: flex;
+ }
