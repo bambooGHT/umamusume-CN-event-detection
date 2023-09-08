@@ -147,7 +147,7 @@ class Switch {
     if (this.timer === null) return;
     this.timer = setTimeout(() => {
       this.render.render().then(() => this.monitorOpen());
-    }, 500);
+    }, 560);
   }
   monitorClose () {
     clearTimeout(this.timer);
@@ -238,7 +238,6 @@ class Render {
       if (count === item.nameLength) return item;
       if (count >= 3 && count > value.len) value.data = item;
     });
-
     return result || value.data;
   }
   /** @returns {Promise<string>} */
@@ -362,7 +361,7 @@ const init = async () => {
   videoElement.play();
 
   const data = {
-    main: umamusumeData.main,
+    main: umamusumeData.main[0],
     eventList: umamusumeData.eventList,
     skills: umamusumeData.skillList,
   };
