@@ -69,7 +69,7 @@ const createCharacterList = (data, render) => {
 const getWorker = async () => {
   const { createWorker } = Tesseract;
   const worker = await createWorker({
-    langPath: "https://tessdata.projectnaptha.com/4.0.0_best"
+    langPath: "https://tessdata.projectnaptha.com/4.0.0_fast"
   });
   await worker.loadLanguage("chi_sim+eng");
   await worker.initialize("chi_sim+eng");
@@ -77,7 +77,7 @@ const getWorker = async () => {
 };
 
 const getScreen = async () => {
-  const options = { video: true };
+  const options = { video: true, audio: false };
   const mediaDevices = navigator.mediaDevices;
   const screen = mediaDevices.getDisplayMedia ? await mediaDevices.getDisplayMedia(options) : await mediaDevices.getUserMedia(options);
   return screen;
@@ -90,26 +90,34 @@ const getScreen = async () => {
 const getImgFn = (videoElement) => {
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
+  // document.body.appendChild(canvas);
+  const { videoWidth, videoHeight } = videoElement;
+  const height = 135;
+  canvas.width = videoWidth;
+  canvas.height = height;
 
-  return async () => {
-    const { videoWidth, videoHeight } = videoElement;
-    const height = 135;
-    canvas.width = videoWidth;
-    canvas.height = height;
-    context.clearRect(0, 0, videoWidth, height);
-    context.drawImage(videoElement, (videoWidth - 35) / 10 * 1.52, (videoHeight - 35) / 10 * 1.82, videoWidth, videoHeight, 30, 0, videoWidth * 1.52, videoHeight * 1.52);
+  const drawImage = () => {
+    context.clearRect(0, 0, canvas.width, height);
+    context.drawImage(videoElement, (videoWidth - 35) / 10 * 1.52, (videoHeight - 35) / 10 * 1.82, videoWidth, videoHeight, 30, 0, videoWidth * 1.5, videoHeight * 1.5);
+  };
 
-    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+  const processImageData = () => {
+    const imageData = context.getImageData(0, 0, canvas.width, height);
     const data = imageData.data;
     for (let i = 0; i < data.length; i += 4) {
       const grayscale = (data[i] + data[i + 1] + data[i + 2]) / 3;
-      const binaryValue = (255 - grayscale) * 6.5;
+      const binaryValue = (255 - grayscale) * 6.25;
       data[i] = binaryValue;
       data[i + 1] = binaryValue;
       data[i + 2] = binaryValue;
     }
     context.putImageData(imageData, 0, 0);
-    return await new Promise(res => canvas.toBlob((b) => res(b)));;
+  };
+
+  return () => {
+    drawImage();
+    processImageData();
+    return new Promise(res => canvas.toBlob((b) => res(b)));
   };
 };
 
@@ -118,9 +126,12 @@ class Switch {
   timer = null;
   /** @type {Render} */
   render = null;
-  throttle = throttle(600);
-  constructor(render) { this.render = render; }
 
+  throttle = throttle(600);
+  /** @param {Render} render */
+  setRender (render) {
+    this.render = render;
+  }
   open = this.throttle((e) => {
     if (!this.render.getImg) {
       alert("尚未选择窗口");
@@ -136,18 +147,20 @@ class Switch {
     this.render.render().then(() => this.monitorOpen());
     this.to = this.close;
   });
+
   close = this.throttle((e) => {
     e.target.innerText = "开始监听";
     this.monitorClose();
     this.to = this.open;
   });
+
   to = this.open;
 
   monitorOpen () {
     if (this.timer === null) return;
     this.timer = setTimeout(() => {
       this.render.render().then(() => this.monitorOpen());
-    }, 560);
+    }, 500);
   }
   monitorClose () {
     clearTimeout(this.timer);
@@ -160,8 +173,6 @@ class Render {
   videoElement = null;
 
   getImg = null;
-  /** @type { HTMLPreElement} */
-  eventNameDOM = null;
   /** @type { HTMLUListElement} */
   listDOM = null;
   /** @type { HTMLUListElement} */
@@ -170,7 +181,7 @@ class Render {
   isDOM = false;
   text = "";
   /** @type { EventData} */
-  currentEvent = {};
+  currentDOMString = {};
 
   eventId = [
     {
@@ -200,22 +211,37 @@ class Render {
 
   async render () {
     const textString = await this.recognizeText();
-    const [text, eventKey] = this.processText(textString);
-    if (!text) return;
+    const textTuple = this.processText(textString);
+
+    if (!textTuple) return;
+
+    const { listDOM, skillDOM, currentDOMString } = this;
+    const [text, eventKey] = textTuple;
+
+    if (this.text === text) {
+      listDOM.innerHTML = currentDOMString;
+      return;
+    }
 
     const event = this.getEvent(text, eventKey);
-    const { listDOM, skillDOM, currentEvent } = this;
-    if (!event || event.name === currentEvent?.name) return;
+
+    console.log(`
+    key: ${eventKey}  
+    value: ${text}`);
+    if (!event) return;
+
     const eventDOMString = this.createEventElement(event);
     listDOM.innerHTML = eventDOMString;
+
     if (event.skillIds) {
       const skills = event.skillIds.map((p) => this.data.skills[p]);
       const skillDOMString = this.createSkillElement(skills);
       skillDOM.innerHTML = skillDOMString;
     }
-    this.isDOM = true;
 
-    this.currentEvent = event;
+    this.isDOM = true;
+    this.text = text;
+    this.currentDOMString = eventDOMString;
   }
   /** 
    * @param {string} text 
@@ -224,49 +250,49 @@ class Render {
    */
   getEvent (text, key) {
     const { data } = this;
-    const [min, max] = [text.length - 1, text.length + 2];
+    const [min, max] = [text.length, text.length + 2];
+    const value = { len: 0, data: undefined };
 
-    const eventList = data[key].filter((p) => {
-      const nameLen = p.nameLength;
-      return nameLen >= min && nameLen <= max;
-    });
-
-    const value = { len: 0, data: null };
-    const result = eventList.find((item) => {
+    const result = data[key].find((item) => {
+      if (item.nameLength < min || item.nameLength > max) return;
       if (text === item.name) return item;
+
       const count = countCommonCharacters(item.name, text);
+
       if (count === item.nameLength) return item;
       if (count >= 3 && count > value.len) value.data = item;
     });
+
     return result || value.data;
   }
   /** @returns {Promise<string>} */
   async recognizeText () {
     const image = URL.createObjectURL(await this.getImg());
     const { data: { text } } = await tesseractWorker.recognize(image);
+
     URL.revokeObjectURL(image);
-    return text.replaceAll(" ", "");
+    return text.replace(/[ .]/g, "");
   }
   /** 
    * @param {string} textString 
-   * @returns {string[]} 
+   * @returns {string[] | undefined} 
   */
   processText (textString) {
     const [eventId, text] = textString.split("\n");
     const eventIndex = this.eventId.find(p => countCommonCharacters(p.id, eventId) > 0);
 
-    if (!text || !eventIndex || !text.replace(/[^\u4e00-\u9fa5a-zA-Z\n]/g, "")) {
+    if (!eventIndex || !text) {
       if (this.isDOM) {
         this.clear();
         this.isDOM = false;
       }
-      return [];
+      return undefined;
     }
-    if (this.text === text || countCommonCharacters(this.text, text) > 2) {
-      return [];
+
+    if (countCommonCharacters(this.text, text) > 2) {
+      return undefined;
     };
 
-    this.text = text;
     return [text, eventIndex.key];
   }
 
@@ -335,40 +361,42 @@ class Render {
 
 let umamusumeData;
 let tesseractWorker;
-const render = new Render();
-const toSwitch = new Switch(render);
+const toSwitch = new Switch();
+
+const init = async () => {
+  const screen = await getScreen();
+  const videoElement = document.createElement("video");
+  const dom = document.getElementById("get");
+
+  videoElement.srcObject = screen;
+  await videoElement.play();
+
+  const getImg = getImgFn(videoElement);
+  const data = {
+    main: umamusumeData.main[0],
+    eventList: umamusumeData.eventList,
+    skills: umamusumeData.skillList,
+  };
+
+  dom.innerText = "点击选择窗口(已选择)";
+  toSwitch.render.initDOM();
+  toSwitch.render.getImg = getImg;
+  Object.assign(toSwitch.render.data, data);
+};
 
 const initData = async () => {
   const data = await fetch("https://gist.githubusercontent.com/bambooGHT/ec54f689fff02b76d19a7b7688bc0a8a/raw/umamusume.json");
   const worker = await getWorker();
   const characterListDOM = document.querySelector(".character-list");
   const dom = document.getElementById("get");
+  const render = new Render();
 
+  toSwitch.setRender(render);
   tesseractWorker = worker;
   umamusumeData = JSON.parse(await data.text());
+  dom.innerText = "点击选择窗口(未选择)";
   characterListDOM.innerHTML = "";
   characterListDOM.append(...createCharacterList(umamusumeData.characterList, render));
-  dom.innerText = "点击选择窗口";
 };
 
 initData();
-
-const init = async () => {
-  if (!tesseractWorker || render.getImg) return;
-  const screen = await getScreen();
-  const videoElement = document.createElement("video");
-  videoElement.srcObject = screen;
-  videoElement.play();
-
-  const data = {
-    main: umamusumeData.main[0],
-    eventList: umamusumeData.eventList,
-    skills: umamusumeData.skillList,
-  };
-  const getImg = getImgFn(videoElement);
-
-  render.initDOM();
-  render.getImg = getImg;
-  Object.assign(render.data, data);
-};
-

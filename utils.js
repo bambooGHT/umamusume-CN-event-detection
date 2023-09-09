@@ -11,16 +11,11 @@ const throttle = (time) => {
   };
 };
 
+/** 
+ * @param {string} str1
+ * @param {string} str2
+ */
 const countCommonCharacters = (str1, str2) => {
   const set1 = new Set(str1);
-  const set2 = new Set(str2);
-
-  let commonCount = 0;
-  set1.forEach(char => {
-    if (set2.has(char)) {
-      commonCount++;
-    }
-  });
-
-  return commonCount;
+  return str2.split("").reduce((count, v) => (set1.has(v) && (count += 1), count), 0);
 };
