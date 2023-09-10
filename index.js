@@ -69,44 +69,47 @@ const createCharacterList = (data, render) => {
 const getWorker = async () => {
   const { createWorker } = Tesseract;
   const worker = await createWorker({
-    langPath: "https://tessdata.projectnaptha.com/4.0.0_fast"
+    langPath: "https://tessdata.projectnaptha.com/4.0.0"
   });
   await worker.loadLanguage("chi_sim+eng");
   await worker.initialize("chi_sim+eng");
   return worker;
 };
 
-const getScreen = async () => {
-  const options = { video: true, audio: false };
+const getScreen = async (options) => {
   const mediaDevices = navigator.mediaDevices;
   const screen = mediaDevices.getDisplayMedia ? await mediaDevices.getDisplayMedia(options) : await mediaDevices.getUserMedia(options);
   return screen;
 };
 /**
  * 
- * @param {HTMLVideoElement} videoElement 
+ * @param {HTMLVideoElement} video 
  * @returns {Promise<Blob>}
  */
-const getImgFn = (videoElement) => {
+const getImgFn = (video) => {
   const canvas = document.createElement("canvas");
-  const context = canvas.getContext("2d");
+  const context = canvas.getContext("2d", { willReadFrequently: true });
   // document.body.appendChild(canvas);
-  const { videoWidth, videoHeight } = videoElement;
-  const height = 135;
-  canvas.width = videoWidth;
-  canvas.height = height;
+  const { videoWidth: width, videoHeight: height } = video;
+  const vWidth = width * 1.75;
+  const vHeight = height * 1.75;
+  const sx = (width - 35) / 10 * 1.66;
+  const sy = (height - 35) / 10 * 1.86;
+  const height1 = 140;
+  canvas.width = width;
+  canvas.height = height1;
 
   const drawImage = () => {
-    context.clearRect(0, 0, canvas.width, height);
-    context.drawImage(videoElement, (videoWidth - 35) / 10 * 1.52, (videoHeight - 35) / 10 * 1.82, videoWidth, videoHeight, 30, 0, videoWidth * 1.5, videoHeight * 1.5);
+    context.clearRect(0, 0, canvas.width, height1);
+    context.drawImage(video, sx, sy, width, height, 30, 0, vWidth, vHeight);
   };
 
   const processImageData = () => {
-    const imageData = context.getImageData(0, 0, canvas.width, height);
+    const imageData = context.getImageData(0, 0, canvas.width, height1);
     const data = imageData.data;
     for (let i = 0; i < data.length; i += 4) {
       const grayscale = (data[i] + data[i + 1] + data[i + 2]) / 3;
-      const binaryValue = (255 - grayscale) * 6.25;
+      const binaryValue = grayscale > 205 ? 255 : 0;
       data[i] = binaryValue;
       data[i + 1] = binaryValue;
       data[i + 2] = binaryValue;
@@ -160,7 +163,7 @@ class Switch {
     if (this.timer === null) return;
     this.timer = setTimeout(() => {
       this.render.render().then(() => this.monitorOpen());
-    }, 500);
+    }, 600);
   }
   monitorClose () {
     clearTimeout(this.timer);
@@ -169,9 +172,6 @@ class Switch {
 };
 
 class Render {
-  /** @type { HTMLVideoElement} */
-  videoElement = null;
-
   getImg = null;
   /** @type { HTMLUListElement} */
   listDOM = null;
@@ -212,36 +212,33 @@ class Render {
   async render () {
     const textString = await this.recognizeText();
     const textTuple = this.processText(textString);
-
     if (!textTuple) return;
 
-    const { listDOM, skillDOM, currentDOMString } = this;
+    const { listDOM, skillDOM, currentDOMString, text: oldText } = this;
     const [text, eventKey] = textTuple;
-
-    if (this.text === text) {
+    if (oldText === text) {
       listDOM.innerHTML = currentDOMString;
       return;
     }
 
     const event = this.getEvent(text, eventKey);
-
     console.log(`
     key: ${eventKey}  
     value: ${text}`);
-    if (!event) return;
+    if (event) {
+      const eventDOMString = this.createEventElement(event);
+      listDOM.innerHTML = eventDOMString;
 
-    const eventDOMString = this.createEventElement(event);
-    listDOM.innerHTML = eventDOMString;
-
-    if (event.skillIds) {
-      const skills = event.skillIds.map((p) => this.data.skills[p]);
-      const skillDOMString = this.createSkillElement(skills);
-      skillDOM.innerHTML = skillDOMString;
+      if (event.skillIds) {
+        const skills = event.skillIds.map((p) => this.data.skills[p]);
+        const skillDOMString = this.createSkillElement(skills);
+        skillDOM.innerHTML = skillDOMString;
+      }
+      this.isDOM = true;
+      this.currentDOMString = eventDOMString;
     }
 
-    this.isDOM = true;
     this.text = text;
-    this.currentDOMString = eventDOMString;
   }
   /** 
    * @param {string} text 
@@ -269,7 +266,7 @@ class Render {
   async recognizeText () {
     const image = URL.createObjectURL(await this.getImg());
     const { data: { text } } = await tesseractWorker.recognize(image);
-
+    
     URL.revokeObjectURL(image);
     return text.replace(/[ .]/g, "");
   }
@@ -280,7 +277,6 @@ class Render {
   processText (textString) {
     const [eventId, text] = textString.split("\n");
     const eventIndex = this.eventId.find(p => countCommonCharacters(p.id, eventId) > 0);
-
     if (!eventIndex || !text) {
       if (this.isDOM) {
         this.clear();
@@ -288,11 +284,9 @@ class Render {
       }
       return undefined;
     }
-
     if (countCommonCharacters(this.text, text) > 2) {
       return undefined;
-    };
-
+    }
     return [text, eventIndex.key];
   }
 
@@ -364,7 +358,8 @@ let tesseractWorker;
 const toSwitch = new Switch();
 
 const init = async () => {
-  const screen = await getScreen();
+  const options = { video: true, audio: false };
+  const screen = await getScreen(options);
   const videoElement = document.createElement("video");
   const dom = document.getElementById("get");
 
